@@ -5,7 +5,17 @@ import time
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 from datetime import datetime
+
+# 한글 폰트 설정
+font_path = 'C:/Windows/Fonts/NotoSansKR-VF.ttf'  # 윈도우 기본 맑은 고딕 폰트
+font_prop = fm.FontProperties(fname=font_path)
+
+# 폰트 설정 적용
+plt.rc('font', family=fm.FontProperties(fname=font_path).get_name())
+plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
+
 
 from preprocess import load_data, extract_features
 from model import train_model, predict
@@ -86,12 +96,14 @@ def anomaly_detection():
     """
     # 데이터 로드 및 전처리
     df = load_data()
-    
     if df.empty:
         print("분석할 데이터가 없습니다.")
         return
     
     X = extract_features(df)
+    
+    # 원본 데이터프레임과 특성 데이터프레임의 인덱스 동기화
+    df_filtered = df.iloc[X.index]
     
     # 모델 학습
     model = train_model(X)
@@ -107,18 +119,18 @@ def anomaly_detection():
     anomaly = predictions == -1
     
     plt.subplot(2, 1, 1)
-    plt.plot(df['timestamp'], df['cpu_temp'], 'b-', label='CPU 온도')
-    plt.scatter(df.loc[normal, 'timestamp'], df.loc[normal, 'cpu_temp'], c='green', label='정상', alpha=0.5)
-    plt.scatter(df.loc[anomaly, 'timestamp'], df.loc[anomaly, 'cpu_temp'], c='red', label='이상', alpha=0.5)
+    plt.plot(df_filtered['timestamp'], df_filtered['cpu_temp'], 'b-', label='CPU 온도')
+    plt.scatter(df_filtered.loc[normal, 'timestamp'], df_filtered.loc[normal, 'cpu_temp'], c='green', label='정상', alpha=0.5)
+    plt.scatter(df_filtered.loc[anomaly, 'timestamp'], df_filtered.loc[anomaly, 'cpu_temp'], c='red', label='이상', alpha=0.5)
     plt.title('CPU 온도 이상 탐지')
     plt.ylabel('온도 (°C)')
     plt.legend()
     plt.grid(True)
     
     plt.subplot(2, 1, 2)
-    plt.plot(df['timestamp'], df['fan_speed'], 'b-', label='팬 속도')
-    plt.scatter(df.loc[normal, 'timestamp'], df.loc[normal, 'fan_speed'], c='green', label='정상', alpha=0.5)
-    plt.scatter(df.loc[anomaly, 'timestamp'], df.loc[anomaly, 'fan_speed'], c='red', label='이상', alpha=0.5)
+    plt.plot(df_filtered['timestamp'], df_filtered['fan_speed'], 'b-', label='팬 속도')
+    plt.scatter(df_filtered.loc[normal, 'timestamp'], df_filtered.loc[normal, 'fan_speed'], c='green', label='정상', alpha=0.5)
+    plt.scatter(df_filtered.loc[anomaly, 'timestamp'], df_filtered.loc[anomaly, 'fan_speed'], c='red', label='이상', alpha=0.5)
     plt.title('팬 속도 이상 탐지')
     plt.xlabel('시간')
     plt.ylabel('속도 (RPM)')
